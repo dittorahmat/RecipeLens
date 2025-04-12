@@ -85,10 +85,19 @@ export default function Home() {
         </CardHeader>
         <CardContent className="grid gap-4">
           <Input
-            type="url"
-            placeholder="Enter image URL"
-            value={photoUrl}
-            onChange={e => setPhotoUrl(e.target.value)}
+            type="file"
+            accept="image/*"
+            onChange={e => {
+              if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                // Handle the file here, e.g., convert it to a data URL
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  setPhotoUrl(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+              }
+            }}
           />
           <Button onClick={handlePhotoAnalysis} disabled={isLoading}>
             {isLoading ? (
