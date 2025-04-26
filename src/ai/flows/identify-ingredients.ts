@@ -6,11 +6,24 @@
 
 'use server';
 
+/**
+ * @fileOverview Identifies ingredients from a photo using AI.
+ *
+ * - identifyIngredients - A function that handles the ingredient identification process.
+ * - IdentifyIngredientsInput - The input type for the identifyIngredients function.
+ * - IdentifyIngredientsOutput - The return type for the identifyIngredients function.
+ */
+
+
 import {ai} from '@/ai/ai-instance';
 import {z} from 'genkit';
 
 const IdentifyIngredientsInputSchema = z.object({
-  photoUrl: z.string().describe('The URL of the ingredient photo.'),
+  photoUrl: z
+    .string()
+    .describe(
+      "A photo of ingredients, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
 });
 export type IdentifyIngredientsInput = z.infer<typeof IdentifyIngredientsInputSchema>;
 
@@ -29,7 +42,11 @@ const prompt = ai.definePrompt({
   name: 'identifyIngredientsPrompt',
   input: {
     schema: z.object({
-      photoUrl: z.string().describe('The URL of the ingredient photo.'),
+       photoUrl: z
+        .string()
+        .describe(
+          "A photo of ingredients, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+        ),
     }),
   },
   output: {
@@ -39,9 +56,9 @@ const prompt = ai.definePrompt({
       ).describe('A list of identified ingredients.'),
     }),
   },
-  prompt: `You are an expert chef. You are great at identifying ingredients from a photo.
+  prompt: `You are an expert chef specializing in identifying food ingredients from photographs.
 
-  Based on the photo, list all the ingredients that you can identify.
+  Analyze the provided photo carefully. List all the distinct food ingredients you can clearly identify. Be specific (e.g., "red onion" instead of just "onion", "chicken breast" instead of just "chicken"). If an ingredient is unclear or ambiguous, omit it. Return only the list of identified ingredients.
 
   Photo: {{media url=photoUrl}}
 
@@ -60,6 +77,9 @@ const identifyIngredientsFlow = ai.defineFlow<
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    // Basic filtering to remove potential empty strings or placeholder text from the AI
+    const filteredIngredients = output?.ingredients.filter(ing => ing && ing.trim().length > 0 && !ing.toLowerCase().includes("no ingredients identified")) || [];
+    return { ingredients: filteredIngredients };
   }
 );
+

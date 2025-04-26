@@ -1,20 +1,13 @@
 import type {Metadata} from 'next';
-import {Geist, Geist_Mono} from 'next/font/google';
+import { Inter } from 'next/font/google' // Using Inter font for a clean look
 import './globals.css';
+import { Toaster } from "@/components/ui/toaster" // Import Toaster
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Recipe Lens',
-  description: 'Snap a picture of ingredients and get recommendation of recipes',
+  title: 'Recipe Lens - Find Recipes from Ingredients',
+  description: 'Upload a photo of your ingredients or add them manually, and RecipeLens will suggest recipes you can make.',
 };
 
 export default function RootLayout({
@@ -24,8 +17,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+       <body className={`${inter.className} antialiased`}>
         {children}
+        <Toaster /> {/* Add Toaster component here */}
       </body>
     </html>
   );
