@@ -1,9 +1,10 @@
+
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth'; // Removed getRedirectResult import
 import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithRedirect } from 'firebase/auth';
 
 interface AuthContextProps {
   user: User | null;
@@ -19,38 +20,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Rely solely on onAuthStateChanged for auth state
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log("Auth state changed: ", currentUser);
       setUser(currentUser);
-      setLoading(false);
+      setLoading(false); // Set loading false *after* auth state is determined
     });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, []); // Empty dependency array ensures this runs once on mount
 
   const signInWithGoogle = async () => {
+    // Set loading to true *before* initiating redirect
+    // Note: The page will reload, so this loading state is short-lived
+    // but might be useful if redirect initiation fails.
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged will handle setting the user
+      await signInWithRedirect(auth, googleProvider);
+      // Redirect occurs; state updates are handled by onAuthStateChanged after redirect
     } catch (error) {
-      console.error("Error signing in with Google: ", error);
-      // Ensure loading is false on error, otherwise it might get stuck
-      // if onAuthStateChanged doesn't fire immediately after error
-      setLoading(false);
+      console.error("Error initiating sign in with Google redirect: ", error);
+      setLoading(false); // Reset loading state if redirect initiation fails
     }
-    // setLoading will be set to false by onAuthStateChanged's effect after successful login
   };
 
   const signOut = async () => {
-    setLoading(true); // Indicate loading state during sign out
+    setLoading(true);
     try {
       await firebaseSignOut(auth);
-      setUser(null); // Explicitly set user to null on sign out
+      // onAuthStateChanged will set user to null and loading to false
     } catch (error) {
       console.error("Error signing out: ", error);
-    } finally {
-        setLoading(false); // Ensure loading is false after sign out attempt
+      setLoading(false); // Reset loading state on sign-out error
     }
   };
 
@@ -60,12 +62,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signInWithGoogle,
     signOut,
   };
-
-  // Avoid rendering children until authentication state is determined,
-  // unless you specifically want to show a loading state within children.
-  // if (loading) {
-  //   return <div>Loading authentication...</div>; // Or a spinner component
-  // }
 
   return (
     <AuthContext.Provider value={value}>
