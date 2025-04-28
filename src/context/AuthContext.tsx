@@ -22,7 +22,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Rely solely on onAuthStateChanged for auth state
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log("Auth state changed: ", currentUser);
+      // <<< ADDED/MODIFIED LOGGING HERE >>>
+      console.log('Auth State Changed:', currentUser); // Log the user object (or null)
       setUser(currentUser);
       setLoading(false); // Set loading false *after* auth state is determined
     });
